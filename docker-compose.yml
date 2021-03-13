@@ -1,0 +1,41 @@
+version: "3"
+services:
+  question1:
+    image: justmop/question1:0.0.1
+    container_name: question1
+    build:
+      context: ./question1
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/my_db
+      SPRING_DATASOURCE_USERNAME: my_user
+      SPRING_DATASOURCE_PASSWORD: my_password
+  php-fpm:
+    build:
+      context: ./php-fpm
+    depends_on:
+      - question1
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_SECRET=${APP_SECRET}
+    volumes:
+      - ./question2:/var/www
+  nginx:
+    build:
+      context: ./nginx
+    volumes:
+      - ./question2:/var/www
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites/:/etc/nginx/sites-available
+      - ./nginx/conf.d/:/etc/nginx/conf.d
+      - ./logs:/var/log
+    depends_on:
+      - php-fpm
+    ports:
+      - "8082:80"
+networks:
+  default:
+    external: true
+    name: justmop_casestudy_network
